@@ -1,44 +1,54 @@
 import discord
-import os
-
-intents = discord.Intents.default()
-intents.message_content = True
-
-client = discord.Client(intents=intents)
-
-@client.event
-async def on_ready():
-    print(f'Logged in as {client.user}')
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    if message.content == "!ping":
-        await message.channel.send("Pong 🏓")
-
-client.run(os.getenv("TOKEN"))
-
-import discord
+from discord import app_commands
 from discord.ext import commands
 import os
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
+intents = discord.Intents.default()
 
-@bot.command()
-async def embed(ctx):
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+# لما يشتغل البوت
+@bot.event
+async def on_ready():
+    await bot.tree.sync()
+    print(f"Logged in as {bot.user}")
+
+# أمر الامبيد
+@bot.tree.command(name="embed", description="سوي امبيد بنفسك")
+@app_commands.describe(
+    title="العنوان",
+    description="الوصف",
+    image="رابط صورة (اختياري)",
+    color="لون Hex مثل FF0000 (اختياري)"
+)
+async def embed(
+    interaction: discord.Interaction,
+    title: str,
+    description: str,
+    image: str = None,
+    color: str = None
+):
+    # اللون
+    try:
+        color = int(color, 16) if color else 0x3498db
+    except:
+        color = 0x3498db
+
     emb = discord.Embed(
-        title="📢 إعلان",
-        description="أهلاً بك في السيرفر 🔥",
-        color=discord.Color.blue()
+        title=title,
+        description=description,
+        color=color
     )
 
-    emb.add_field(name="📌 القوانين", value="احترام الجميع", inline=False)
-    emb.add_field(name="🎮 فعاليات", value="قريباً...", inline=False)
+    # الصورة (اختياري)
+    if image:
+        emb.set_image(url=image)
+        
+    # الفوتر التلقائي
+    emb.set_footer(text="Made by PAĮN")
 
-    emb.set_footer(text="بوت رهيب 😎")
+    # إرسال الامبيد
+    await interaction.response.send_message(embed=emb)
 
-    await ctx.send(embed=emb)
-
+# تشغيل البوت
 bot.run(os.getenv("TOKEN"))
